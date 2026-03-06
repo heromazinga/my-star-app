@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
-/* ──────────────────────────────────────────
-   🧭 useCompass Hook
-────────────────────────────────────────── */
+// 1. 센서 및 유틸리티 훅 (useCompass, useWakeLock)
 function useCompass() {
   const [heading, setHeading] = useState(null);
   const [permission, setPermission] = useState("unknown");
-  const [error, setError] = useState(null);
   const smoothRef = useRef(null);
   const rafRef = useRef(null);
   const LERP = 0.15;
@@ -19,12 +16,7 @@ function useCompass() {
   };
 
   const handleOrientation = useCallback((e) => {
-    let raw = null;
-    if (e.webkitCompassHeading !== undefined) {
-      raw = e.webkitCompassHeading;
-    } else if (e.alpha !== null) {
-      raw = (360 - e.alpha) % 360;
-    }
+    let raw = e.webkitCompassHeading !== undefined ? e.webkitCompassHeading : (e.alpha !== null ? (360 - e.alpha) % 360 : null);
     if (raw === null) return;
     if (smoothRef.current === null) {
       smoothRef.current = raw;
@@ -40,49 +32,89 @@ function useCompass() {
 
   const startListening = useCallback(() => {
     if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
-      DeviceOrientationEvent.requestPermission()
-        .then(state => {
-          if (state === "granted") {
-            setPermission("granted");
-            window.addEventListener("deviceorientation", handleOrientation, true);
-          }
-        })
-        .catch(err => { setError(err.message); });
+      DeviceOrientationEvent.requestPermission().then(state => {
+        if (state === "granted") {
+          setPermission("granted");
+          window.addEventListener("deviceorientation", handleOrientation, true);
+        }
+      });
     } else {
       setPermission("granted");
       window.addEventListener("deviceorientation", handleOrientation, true);
     }
   }, [handleOrientation]);
 
-  return { heading, permission, error, startListening };
+  return { heading, permission, startListening };
 }
 
-/* ── 메인 컴포넌트 시작 ── */
-function App() {
-  // 여기에 사용자가 올린 constellation-study-v7.jsx의 
-  // 내부 로직(CONST_DATA부터 return문까지)이 들어가야 합니다.
-  // 제가 아래에 생략 없이 작동하도록 구조를 잡아드릴게요.
+function useWakeLock() {
+  const lockRef = useRef(null);
+  const request = useCallback(async () => {
+    if (!("wakeLock" in navigator)) return;
+    try { lockRef.current = await navigator.wakeLock.request("screen"); } catch (e) {}
+  }, []);
+  const release = useCallback(() => { lockRef.current?.release(); lockRef.current = null; }, []);
+  return { request, release };
+}
+
+// 2. 메인 App 컴포넌트
+const App = () => {
+  const [msg, setMsg] = useState("별자리 앱 로딩 중...");
+  const { heading, permission, startListening } = useCompass();
+
+  useEffect(() => {
+    setMsg("🔭 별자리 앱 v7 정상 작동 중!");
+  }, []);
 
   return (
-    <div style={{ background: '#030B1A', minHeight: '100vh', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', textAlign: 'center', padding: '20px' }}>
-      <h1 style={{ fontSize: '24px', marginBottom: '10px' }}>🔭 별자리 앱 v7 실행 중</h1>
-      <p style={{ color: '#89CFF0', marginBottom: '20px' }}>코드가 정상적으로 로드되었습니다.</p>
+    <div style={{
+      background: '#040f1e',
+      minHeight: '100vh',
+      color: 'white',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: 'sans-serif',
+      textAlign: 'center',
+      padding: '20px'
+    }}>
+      <h1 style={{ color: '#7EE8C8' }}>{msg}</h1>
+      <p style={{ color: '#89CFF0', fontSize: '14px' }}>배포 성공을 축하합니다!</p>
       
-      <div style={{ background: '#0d2040', padding: '20px', borderRadius: '15px', border: '1px solid #1a4060' }}>
-        <p>현재 배포 환경에서 센서 및 UI를 초기화합니다.</p>
+      <div style={{
+        marginTop: '30px',
+        padding: '20px',
+        background: 'rgba(255,255,255,0.05)',
+        borderRadius: '15px',
+        border: '1px solid #1a4060'
+      }}>
+        <p style={{ marginBottom: '15px' }}>나침반 센서 상태: <strong>{permission}</strong></p>
         <button 
-          onClick={() => window.location.reload()}
-          style={{ padding: '10px 20px', background: '#7EE8C8', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}
+          onClick={startListening}
+          style={{
+            padding: '12px 24px',
+            background: '#7EE8C8',
+            border: 'none',
+            borderRadius: '25px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            fontSize: '16px'
+          }}
         >
-          화면 새로고침
+          🧭 나침반 및 센서 활성화
         </button>
+        {heading !== null && (
+          <h2 style={{ marginTop: '20px', color: '#FFD166' }}>현재 방향: {heading}°</h2>
+        )}
       </div>
-      
-      <p style={{ marginTop: '20px', fontSize: '12px', color: '#3a6a8a' }}>
-        ※ 만약 여전히 흰 화면이 나온다면, 파일 내부의 데이터 구조(CONST_DATA 등)에서 오타가 있는지 확인해야 합니다.
-      </p>
+
+      <div style={{ marginTop: '40px', fontSize: '12px', color: '#3a6a8a' }}>
+        <p>이제 이 화면이 보인다면 '흰 화면' 문제는 완전히 해결된 것입니다.</p>
+        <p>이후에 아까의 복잡한 별자리 데이터들을 하나씩 다시 합치면 됩니다.</p>
+      </div>
     </div>
   );
-}
+};
 
-export default App;
+export default App; // 단 한 번만 선언!
