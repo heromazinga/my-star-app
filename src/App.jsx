@@ -746,8 +746,8 @@ function Planisphere({ season, selected, onSelect, color, showAst, show28su, tod
   const [dragStart, setDragStart] = useState({x:0,y:0,px:0,py:0});
   const pinchRef = useRef(null); // 핀치 줌 상태
   const svgRef = useRef(null);   // SVG 엘리먼트 ref
-  const size = fullscreen ? 520 : 300;
-  const cx = size/2, cy = size/2, R = fullscreen ? 230 : 128;
+  const size = fullscreen ? Math.min(typeof window!=='undefined'?window.innerWidth:520, typeof window!=='undefined'?window.innerHeight-140:520, 600) : 300;
+  const cx = size/2, cy = size/2, R = fullscreen ? size*0.42 : 128;
   const zR = R * zoom;
   const ocx = cx + pan.x;
   const ocy = cy + pan.y;
@@ -825,8 +825,8 @@ function Planisphere({ season, selected, onSelect, color, showAst, show28su, tod
           </button>
         ))}
         <button onClick={()=>{setZoom(1);setPan({x:0,y:0});}}
-          style={{width:24,height:24,borderRadius:6,border:"none",background:"rgba(13,32,64,0.9)",color:"#3a6a8a",fontSize:"9px",cursor:"pointer",lineHeight:1.1,fontWeight:"600"}}>
-          초기화
+          style={{width:24,height:24,borderRadius:6,border:"none",background:"rgba(13,32,64,0.9)",color:"#3a6a8a",fontSize:"13px",cursor:"pointer",lineHeight:1,fontWeight:"700"}}>
+          0
         </button>
       </div>
       <div style={{transform:`rotate(${compassRotation}deg)`,transition:compassLock?"transform 0.3s ease-out":"none"}}>
@@ -1519,17 +1519,61 @@ export default function App() {
 
       {/* FULLSCREEN OVERLAY */}
       {fullscreen && (
-        <div style={{position:"fixed",inset:0,background:"#010810",zIndex:1000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-          <button onClick={()=>setFullscreen(false)}
-            style={{position:"absolute",top:16,right:16,padding:"6px 14px",borderRadius:20,border:"none",background:"#0d2040",color:"#89CFF0",fontSize:"12px",cursor:"pointer",fontFamily:"inherit",fontWeight:"700",zIndex:10}}>
-            ✕ 닫기
-          </button>
-          <div style={{fontSize:"11px",color:"#2a5070",marginBottom:"8px"}}>
-            🕙 {obsHour>=24?`0${obsHour-24}:00`:`${Math.floor(obsHour)}:${obsHour%1?'30':'00'}`} 기준 · 드래그/줌 가능
+        <div style={{position:"fixed",inset:0,background:"#010810",zIndex:1000,display:"flex",flexDirection:"column"}}>
+          {/* 상단 컨트롤 바 */}
+          <div style={{display:"flex",alignItems:"center",gap:8,padding:isMobile?"12px 14px":"10px 18px",
+            paddingTop:`calc(env(safe-area-inset-top) + ${isMobile?12:10}px)`,
+            background:"rgba(2,12,28,.95)",borderBottom:"1px solid #0d2040",flexWrap:"wrap"}}>
+            <button onClick={()=>setShowAst(v=>!v)}
+              style={{padding:isMobile?"8px 12px":"4px 10px",borderRadius:12,border:"none",cursor:"pointer",
+                fontSize:isMobile?"12px":"11px",fontFamily:"inherit",fontWeight:"700",
+                background:showAst?sc.color:"#0d2040",color:showAst?"#030B1A":"#4a8aa8"}}>
+              {showAst?"✦ON":"✦아스테리즘"}
+            </button>
+            <button onClick={()=>setShow28su(v=>!v)}
+              style={{padding:isMobile?"8px 12px":"4px 10px",borderRadius:12,border:"none",cursor:"pointer",
+                fontSize:isMobile?"12px":"11px",fontFamily:"inherit",fontWeight:"700",
+                background:show28su?"#F4845F":"#0d2040",color:show28su?"#030B1A":"#4a8aa8"}}>
+              {show28su?"🏮ON":"🏮28수"}
+            </button>
+            <button onClick={()=>setTodayMode(v=>!v)}
+              style={{padding:isMobile?"8px 12px":"4px 10px",borderRadius:12,border:"none",cursor:"pointer",
+                fontSize:isMobile?"12px":"11px",fontFamily:"inherit",fontWeight:"700",
+                background:todayMode?"linear-gradient(135deg,#FFD166,#F4845F)":"#0d2040",
+                color:todayMode?"#030B1A":"#4a8aa8"}}>
+              🌙 {todayMode?"오늘밤 ON":"오늘밤"}
+            </button>
+            <div style={{flex:1}}/>
+            <span style={{fontSize:isMobile?"13px":"12px",fontWeight:"700",color:sc.color,minWidth:"40px"}}>
+              🕙 {(()=>{const h=obsHour>=24?obsHour-24:obsHour;const hh=Math.floor(h);const mm=h%1?'30':'00';return `${String(hh).padStart(2,'0')}:${mm}`;})()}
+            </span>
           </div>
-          <Planisphere season={season} selected={selected} onSelect={id=>{selectConst(id);setFullscreen(false);}}
-            color={sc.color} showAst={showAst} show28su={show28su} todayMode={todayMode} currentMonth={currentMonth}
-            obsHour={obsHour} fullscreen={true} heading={heading} compassLock={compassLock}/>
+          {/* 시간 슬라이더 */}
+          <div style={{display:"flex",alignItems:"center",gap:10,padding:isMobile?"8px 14px":"6px 18px",background:"rgba(2,12,28,.9)"}}>
+            <span style={{fontSize:"10px",color:"#2a5070",flexShrink:0}}>19시</span>
+            <input type="range" min={19} max={25} step={0.5} value={obsHour}
+              onChange={e=>setObsHour(Number(e.target.value))}
+              style={{flex:1,accentColor:sc.color,cursor:"pointer",height:isMobile?"6px":"4px"}}/>
+            <span style={{fontSize:"10px",color:"#2a5070",flexShrink:0}}>01시</span>
+          </div>
+          {/* 방위도 — 화면 꽉 차게 */}
+          <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+            <Planisphere season={season} selected={selected} onSelect={id=>{selectConst(id);setFullscreen(false);}}
+              color={sc.color} showAst={showAst} show28su={show28su} todayMode={todayMode} currentMonth={currentMonth}
+              obsHour={obsHour} fullscreen={true} heading={heading} compassLock={compassLock}/>
+          </div>
+          {/* 하단 닫기 버튼 */}
+          <div style={{padding:isMobile?"14px 14px":"10px 18px",
+            paddingBottom:`calc(env(safe-area-inset-bottom) + ${isMobile?14:10}px)`,
+            background:"rgba(2,12,28,.95)",borderTop:"1px solid #0d2040",
+            display:"flex",justifyContent:"center"}}>
+            <button onClick={()=>setFullscreen(false)}
+              style={{padding:isMobile?"14px 40px":"10px 30px",borderRadius:20,border:"1px solid #1a4060",
+                background:"#0d2040",color:"#89CFF0",fontSize:isMobile?"15px":"13px",
+                cursor:"pointer",fontFamily:"inherit",fontWeight:"700"}}>
+              ✕ 닫기
+            </button>
+          </div>
         </div>
       )}
 
