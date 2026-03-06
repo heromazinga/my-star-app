@@ -799,7 +799,7 @@ function Planisphere({ season, selected, onSelect, color, showAst, show28su, tod
         </button>
       </div>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}
-        style={{display:"block",margin:"0 auto",cursor:dragging?"grabbing":"grab"}}
+        style={{display:"block",margin:"0 auto",cursor:dragging?"grabbing":"grab",touchAction:"none"}}
         onWheel={handleWheel}
         onMouseDown={e=>{ if(e.button===0) startDrag(e.clientX,e.clientY); }}
         onMouseMove={e=>moveDrag(e.clientX,e.clientY)}
