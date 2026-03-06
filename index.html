@@ -1,12 +1,37 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>별자리 앱 테스트</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/App.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#010810" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="별자리 학습" />
+
+  <title>별자리 학습 가이드 🔭</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- 애플 아이콘 (iOS 홈 화면 추가용) -->
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+
+  <!-- 파비콘 -->
+  <link rel="icon" type="image/png" href="/icon-192.png" />
+</head>
+<body style="margin:0; background:#010810;">
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+
+  <!-- Service Worker 등록 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('SW 등록 성공:', reg.scope))
+          .catch(err => console.warn('SW 등록 실패:', err));
+      });
+    }
+  </script>
+</body>
 </html>
