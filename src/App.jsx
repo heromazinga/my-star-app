@@ -723,6 +723,7 @@ function Planisphere({ season, selected, onSelect, color, showAst, show28su, tod
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState({x:0,y:0,px:0,py:0});
   const pinchRef = useRef(null); // 핀치 줌 상태
+  const svgRef = useRef(null);   // SVG 엘리먼트 ref
   const size = fullscreen ? 520 : 300;
   const cx = size/2, cy = size/2, R = fullscreen ? 230 : 128;
   const zR = R * zoom;
@@ -747,10 +748,17 @@ function Planisphere({ season, selected, onSelect, color, showAst, show28su, tod
     vertices: ast.vertices.map(v => ({ ...v, ...getTimedPos(v.az, v.alt, obsHour) }))
   }));
 
-  const handleWheel = (e) => {
+  const handleWheel = useCallback((e) => {
     e.preventDefault();
     setZoom(z => Math.min(2.8, Math.max(0.45, z - e.deltaY * 0.001)));
-  };
+  }, []);
+
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
 
   const startDrag = (clientX, clientY) => {
     setDragging(true);
@@ -798,9 +806,8 @@ function Planisphere({ season, selected, onSelect, color, showAst, show28su, tod
           초기화
         </button>
       </div>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}
+      <svg ref={svgRef} width={size} height={size} viewBox={`0 0 ${size} ${size}`}
         style={{display:"block",margin:"0 auto",cursor:dragging?"grabbing":"grab",touchAction:"none"}}
-        onWheel={handleWheel}
         onMouseDown={e=>{ if(e.button===0) startDrag(e.clientX,e.clientY); }}
         onMouseMove={e=>moveDrag(e.clientX,e.clientY)}
         onMouseUp={endDrag} onMouseLeave={endDrag}
