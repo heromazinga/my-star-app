@@ -427,6 +427,28 @@ function getMoonPhase(date = new Date()) {
   return { phase, pct, illum, name, emoji, tip, age: Math.floor(phase) };
 }
 
+/* ── 달 하늘 위치 추정기 ──
+   월령(phase)과 관측시간으로 달의 대략적인 방위각/고도 계산
+   서울 37.5°N 기준. 정밀 천문 계산이 아닌 시각적 표시용 근사 */
+function getMoonSkyPosition(obsHour, moonPhase) {
+  // 달 남중 시각: 신월=12시, 보름달=0시
+  const transitHour = (12 + (moonPhase / 29.53) * 24) % 24;
+  // 관측 시각과 남중 시각의 차이 (시간각)
+  let ha = obsHour >= 24 ? obsHour - 24 : obsHour;
+  let diff = ha - transitHour;
+  if (diff > 12) diff -= 24;
+  if (diff < -12) diff += 24;
+  // 고도: 남중 시 최대 ~55°, 시간각에 따라 감소
+  const maxAlt = 52 + Math.sin(moonPhase / 29.53 * 2 * Math.PI) * 8;
+  const alt = maxAlt * Math.cos(diff * Math.PI / 6.5);
+  // 방위각: 남중=180°(남), 동쪽에서 떠서 서쪽으로 짐
+  let az;
+  if (diff <= 0) az = 180 + diff * 15;  // 동→남
+  else az = 180 + diff * 15;            // 남→서
+  az = ((az % 360) + 360) % 360;
+  return { az, alt: Math.round(alt), visible: alt > 5 };
+}
+
 /* ── 박명(薄明) 계산기 ──
    서울 37.5°N 기준 천문박명 종료 시각 (태양 고도 -18°)
    월별 고정 근사값 (매년 거의 동일) */
@@ -717,7 +739,7 @@ function StarMapSVG({ data, color }) {
 }
 
 /* ── PLANISPHERE ── */
-function Planisphere({ season, selected, onSelect, color, showAst, show28su, todayMode, currentMonth, obsHour, fullscreen, heading }) {
+function Planisphere({ season, selected, onSelect, color, showAst, show28su, todayMode, currentMonth, obsHour, fullscreen, heading, compassLock }) {
   const [zoom, setZoom] = useState(1.0);
   const [pan, setPan] = useState({x:0, y:0});
   const [dragging, setDragging] = useState(false);
@@ -792,7 +814,8 @@ function Planisphere({ season, selected, onSelect, color, showAst, show28su, tod
     }
   };
 
-  return (
+    const compassRotation = compassLock && heading !== null ? -heading : 0;
+    return (
     <div style={{position:"relative"}}>
       <div style={{position:"absolute",top:6,right:6,zIndex:10,display:"flex",flexDirection:"column",gap:3}}>
         {[["＋",0.25],["-",-0.25]].map(([lbl,delta])=>(
@@ -806,6 +829,7 @@ function Planisphere({ season, selected, onSelect, color, showAst, show28su, tod
           초기화
         </button>
       </div>
+      <div style={{transform:`rotate(${compassRotation}deg)`,transition:compassLock?"transform 0.3s ease-out":"none"}}>
       <svg ref={svgRef} width={size} height={size} viewBox={`0 0 ${size} ${size}`}
         style={{display:"block",margin:"0 auto",cursor:dragging?"grabbing":"grab",touchAction:"none"}}
         onMouseDown={e=>{ if(e.button===0) startDrag(e.clientX,e.clientY); }}
@@ -868,6 +892,24 @@ function Planisphere({ season, selected, onSelect, color, showAst, show28su, tod
               </g>
             );
           })}
+
+          {/* Moon */}
+          {todayMode && (()=>{
+            const moon = getMoonPhase();
+            const moonPos = getMoonSkyPosition(obsHour, moon.phase);
+            if (!moonPos.visible) return null;
+            const [mx,my] = toXY(moonPos.az, moonPos.alt);
+            return (
+              <g filter="url(#pgfx)">
+                <circle cx={mx} cy={my} r={14} fill="#FFE4A0" opacity="0.08"/>
+                <circle cx={mx} cy={my} r={8} fill="#FFE4A0" opacity="0.15"/>
+                <text x={mx} y={my+4.5} textAnchor="middle" fontSize="14">{moon.emoji}</text>
+                <text x={mx} y={my-11} textAnchor="middle" fontSize="7" fill="#FFE4A0" fontFamily="sans-serif" fontWeight="700" opacity="0.9">
+                  {moon.name} {moon.illum}%
+                </text>
+              </g>
+            );
+          })()}
 
           {/* Constellation markers */}
           {Object.entries(positions).map(([id,pos])=>{
@@ -942,6 +984,13 @@ function Planisphere({ season, selected, onSelect, color, showAst, show28su, tod
         <circle cx={cx} cy={cy} r={2.5} fill="#102030"/>
         <text x={cx+4} y={cy-3} fontSize="5.5" fill="#1a3050" fontFamily="sans-serif">천정</text>
       </svg>
+      </div>
+      {/* 나침반 연동 시 방향 안내 */}
+      {compassLock && heading !== null && (
+        <div style={{textAlign:"center",fontSize:"10px",color:"#FFD166",marginTop:4,opacity:0.8}}>
+          📱 폰이 향하는 방향 = 방위도 위쪽
+        </div>
+      )}
     </div>
   );
 }
@@ -1303,9 +1352,12 @@ export default function App() {
   const [todayMode, setTodayMode] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(now.getMonth() + 1);
   const [obsHour, setObsHour] = useState(22);          // 관측 시간 21~01
-  const [checklist, setChecklist] = useState({});       // {id: true/false}
+  const [checklist, setChecklist] = useState(()=>{
+    try{ const s=localStorage.getItem('constellation-checklist'); return s?JSON.parse(s):{}; }catch{return{};}
+  });
   const [urbanFilter, setUrbanFilter] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [nightMode, setNightMode] = useState(false);  // 야간 적색 필터
   const [mobileTab, setMobileTab] = useState("map");
   const [isMobile, setIsMobile] = useState(typeof window!=='undefined' && window.innerWidth < 768);
   useEffect(()=>{
@@ -1316,10 +1368,12 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");    // 검색어
   const [korSubTab, setKorSubTab] = useState("this");   // this | 28su | quiz
   const [show28su, setShow28su] = useState(false);       // 방위도 28수 오버레이
+  const [compassLock, setCompassLock] = useState(false);  // 나침반-방위도 연동
   const { heading, permission: compassPerm, startListening } = useCompass();
   const { active: wakeLockActive, supported: wakeLockSupported, request: requestWakeLock, release: releaseWakeLock } = useWakeLock();
 
   const toggleCheck = (id) => setChecklist(prev => ({...prev, [id]: !prev[id]}));
+  useEffect(()=>{try{localStorage.setItem('constellation-checklist',JSON.stringify(checklist));}catch{}},[checklist]);
 
   const sc = SEASONS_CFG.find(s=>s.id===season) || {color:"#7EE8C8",nebula:"#030B1A",emoji:"🌸",label:"봄",months:"3~5월"};
   const c = CONST_DATA[selected] || {};
@@ -1363,8 +1417,8 @@ export default function App() {
       <div style={{padding:isMobile?"14px 16px":"10px 18px",borderBottom:"1px solid #0d2040",background:"rgba(2,12,28,.92)",backdropFilter:"blur(10px)"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"10px",marginBottom:"8px"}}>
           <div>
-            <div style={{fontSize:"16px",fontWeight:"800",color:"#c8e8ff",letterSpacing:"1px",fontFamily:"'Exo 2',sans-serif"}}>🔭 별자리 학습 가이드</div>
-            <div style={{fontSize:"10px",color:"#3a6a8a",marginTop:"1px"}}>서울 37.5°N · 8인치 돕소니언 안시</div>
+            <div style={{fontSize:isMobile?"14px":"16px",fontWeight:"800",color:"#c8e8ff",letterSpacing:"1px",fontFamily:"'Exo 2',sans-serif",whiteSpace:"nowrap"}}>🔭 별자리 학습 가이드</div>
+            <div style={{fontSize:"10px",color:"#3a6a8a",marginTop:"1px"}}>서울 37.5°N · 도심 5% 관측 웹앱</div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:isMobile?"8px":"6px",flexWrap:"wrap",justifyContent:"flex-end"}}>
             {todayMode && (
@@ -1430,6 +1484,26 @@ export default function App() {
             </button>
           )}
           {heading !== null && <span style={{fontSize:"10px",color:"#3a6a8a"}}>방위도 화살표 활성</span>}
+          {/* 나침반 연동 */}
+          {heading !== null && (
+            <button onClick={()=>setCompassLock(v=>!v)}
+              style={{padding:isMobile?"8px 14px":"3px 10px",borderRadius:14,
+                border:`1px solid ${compassLock?"#FFD166":"#2a5070"}`,
+                background:compassLock?"rgba(255,209,102,0.2)":"#0d2040",
+                color:compassLock?"#FFD166":"#4a8aa8",fontSize:isMobile?"13px":"11px",
+                cursor:"pointer",fontFamily:"inherit",fontWeight:"600"}}>
+              {compassLock ? "🧭 연동 ON" : "🧭 방위도 연동"}
+            </button>
+          )}
+          {/* 야간 적색 필터 */}
+          <button onClick={()=>setNightMode(v=>!v)}
+            style={{padding:isMobile?"8px 14px":"3px 10px",borderRadius:14,
+              border:`1px solid ${nightMode?"#FF4444":"#2a5070"}`,
+              background:nightMode?"rgba(255,50,50,0.2)":"#0d2040",
+              color:nightMode?"#FF6B6B":"#4a8aa8",fontSize:isMobile?"13px":"11px",
+              cursor:"pointer",fontFamily:"inherit",fontWeight:"600"}}>
+            {nightMode ? "🔴 야간모드 ON" : "🔴 야간모드"}
+          </button>
         </div>
       </div>
 
@@ -1455,7 +1529,7 @@ export default function App() {
           </div>
           <Planisphere season={season} selected={selected} onSelect={id=>{selectConst(id);setFullscreen(false);}}
             color={sc.color} showAst={showAst} show28su={show28su} todayMode={todayMode} currentMonth={currentMonth}
-            obsHour={obsHour} fullscreen={true} heading={heading}/>
+            obsHour={obsHour} fullscreen={true} heading={heading} compassLock={compassLock}/>
         </div>
       )}
 
@@ -1483,9 +1557,14 @@ export default function App() {
             </div>
             <Planisphere season={season} selected={selected} onSelect={selectConst}
               color={sc.color} showAst={showAst} show28su={show28su} todayMode={todayMode} currentMonth={currentMonth}
-              obsHour={obsHour} fullscreen={false} heading={heading}/>
+              obsHour={obsHour} fullscreen={false} heading={heading} compassLock={compassLock}/>
             {todayMode && (
-              <div style={{padding:"4px 8px",display:"flex",gap:8,flexWrap:"wrap"}}>
+              <div style={{padding:"4px 8px",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+                {(()=>{const moon=getMoonPhase();const mp=getMoonSkyPosition(obsHour,moon.phase);return(
+                  <div style={{display:"flex",alignItems:"center",gap:3,fontSize:"10px",color:"#FFE4A0"}}>
+                    <span>{moon.emoji}</span> {moon.name} {moon.illum}%{!mp.visible&&" (지평선 아래)"}
+                  </div>
+                );})()}
                 {PLANETS_NOW.map((p,i)=>(
                   <div key={i} style={{display:"flex",alignItems:"center",gap:3,fontSize:"10px",color:p.color}}>
                     <div style={{width:7,height:7,borderRadius:"50%",background:p.color,boxShadow:`0 0 4px ${p.color}`}}/>
@@ -1829,9 +1908,14 @@ export default function App() {
       )}
 
       <div style={{padding:"7px 18px",borderTop:"1px solid #0d2040",fontSize:"10px",color:"#1a3050",display:isMobile?"none":"flex",justifyContent:"space-between",background:"rgba(2,8,18,.9)"}}>
-        <span>서울 37.5°N · 8인치 돕소니언 안시 · v9c</span>
+        <span>서울 37.5°N · 도심 5% 관측 · v9c</span>
         <span>{Object.keys(CONST_DATA).length}개 별자리 · 28수 · 줌/핀치/체크리스트 🌙</span>
       </div>
+
+      {/* 야간 적색 필터 오버레이 */}
+      {nightMode && (
+        <div style={{position:"fixed",inset:0,background:"rgba(80,0,0,0.55)",mixBlendMode:"multiply",pointerEvents:"none",zIndex:9999}}/>
+      )}
     </div>
   );
 }
