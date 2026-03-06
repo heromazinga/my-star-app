@@ -1300,6 +1300,12 @@ export default function App() {
   const [urbanFilter, setUrbanFilter] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [mobileTab, setMobileTab] = useState("map");
+  const [isMobile, setIsMobile] = useState(typeof window!=='undefined' && window.innerWidth < 768);
+  useEffect(()=>{
+    const onResize=()=>setIsMobile(window.innerWidth<768);
+    window.addEventListener('resize',onResize);
+    return ()=>window.removeEventListener('resize',onResize);
+  },[]);
   const [searchQuery, setSearchQuery] = useState("");    // 검색어
   const [korSubTab, setKorSubTab] = useState("this");   // this | 28su | quiz
   const [show28su, setShow28su] = useState(false);       // 방위도 28수 오버레이
@@ -1315,7 +1321,7 @@ export default function App() {
   const MONTH_NAMES = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
 
   const changeSeason=(s)=>{ setSeason(s); setSelected((SEASON_CONSTS[s]||[])[0]||""); setTab("info"); setShowAst(false); setTodayMode(false); };
-  const selectConst=(id)=>{ setSelected(id); setTab("info"); if(CONST_DATA[id]) setSeason(CONST_DATA[id].season); };
+  const selectConst=(id)=>{ setSelected(id); setTab("info"); if(CONST_DATA[id]) setSeason(CONST_DATA[id].season); if(isMobile) setMobileTab("detail"); };
 
   // 검색 모드: 전체 별자리에서 검색
   const searchMode = searchQuery.trim().length > 0;
@@ -1342,6 +1348,7 @@ export default function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Exo+2:wght@300;700;800&display=swap');
         ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:#010810} ::-webkit-scrollbar-thumb{background:#1a3050;border-radius:3px}
+        .mobile-scroll::-webkit-scrollbar{display:none} .mobile-scroll{-ms-overflow-style:none;scrollbar-width:none}
         .cc{transition:all .15s} .cc:hover{background:rgba(255,255,255,.05)!important;transform:translateY(-1px)} .tb{transition:all .2s}
       `}</style>
 
@@ -1445,11 +1452,11 @@ export default function App() {
         </div>
       )}
 
-      {/* DESKTOP LAYOUT */}
-      <div style={{display:"flex",minHeight:"calc(100vh - 120px)"}}>
+      {/* MAIN LAYOUT */}
+      <div style={{display:"flex",flexDirection:isMobile?"column":"row",minHeight:isMobile?"calc(100vh - 180px)":"calc(100vh - 120px)"}}>
 
         {/* LEFT — 지도 패널 */}
-        <div style={{width:"300px",flexShrink:0,borderRight:"1px solid #0d2040",display:"flex",flexDirection:"column"}}>
+        <div style={{width:isMobile?"100%":"300px",flexShrink:0,borderRight:isMobile?"none":"1px solid #0d2040",display:isMobile && mobileTab!=="map"?"none":"flex",flexDirection:"column"}}>
           <div style={{padding:"8px 6px 2px",background:"rgba(3,10,20,.8)"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"4px",padding:"0 4px"}}>
               <span style={{fontSize:"10px",color:"#2a5070"}}>
@@ -1560,7 +1567,7 @@ export default function App() {
         </div>
 
         {/* RIGHT — 상세 패널 */}
-        <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",minWidth:0}}>
+        <div style={{flex:1,display:isMobile && mobileTab!=="detail"?"none":"flex",flexDirection:"column",overflow:"hidden",minWidth:0}}>
           <div style={{padding:"14px 18px",borderBottom:"1px solid #0d2040",background:"rgba(3,10,20,.7)",backdropFilter:"blur(8px)"}}>
             <div style={{display:"flex",alignItems:"flex-start",gap:"12px"}}>
               <span style={{fontSize:"38px",lineHeight:1}}>{c.symbol||"★"}</span>
@@ -1579,10 +1586,10 @@ export default function App() {
                 )}
               </div>
             </div>
-            <div style={{display:"flex",gap:"4px",marginTop:"10px",flexWrap:"wrap"}}>
+            <div className={isMobile?"mobile-scroll":""} style={{display:"flex",gap:"4px",marginTop:"10px",flexWrap:isMobile?"nowrap":"wrap",overflowX:isMobile?"auto":"visible",paddingBottom:isMobile?"4px":"0",WebkitOverflowScrolling:"touch"}}>
               {[["info","📍 관측"],["myth","📖 신화"],["talk","💬 스몰토크"],["specs","⭐ 별 스펙"],["dso","🔭 딥스카이"],["kor","🏮 동양"],["planet","🪐 행성"],["cond","🌙 관측조건"],["challenge","🎯 챌린지"],["guide","🌟 초보가이드"],["ast","✦ 아스테리즘"]].map(([t,lbl])=>(
                 <button key={t} className="tb" onClick={()=>setTab(t)}
-                  style={S.tabBtn(t===tab, sc.color)}>{lbl}</button>
+                  style={{...S.tabBtn(t===tab, sc.color),flexShrink:0,whiteSpace:"nowrap"}}>{lbl}</button>
               ))}
             </div>
           </div>
@@ -1798,6 +1805,22 @@ export default function App() {
         </div>
       </div>
 
+      {/* MOBILE BOTTOM TAB BAR */}
+      {isMobile && (
+        <div style={{display:"flex",borderTop:"1px solid #0d2040",background:"rgba(2,8,18,.95)",backdropFilter:"blur(10px)",position:"sticky",bottom:0,zIndex:100}}>
+          {[["map","🗺️ 지도"],["detail","📋 상세"]].map(([t,lbl])=>(
+            <button key={t} onClick={()=>setMobileTab(t)}
+              style={{flex:1,padding:"10px 4px",border:"none",background:"none",cursor:"pointer",
+                fontSize:"12px",fontWeight:mobileTab===t?"700":"400",
+                color:mobileTab===t?sc.color:"#2a5070",
+                borderTop:mobileTab===t?`2px solid ${sc.color}`:"2px solid transparent",
+                fontFamily:"inherit"}}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div style={{padding:"7px 18px",borderTop:"1px solid #0d2040",fontSize:"10px",color:"#1a3050",display:"flex",justifyContent:"space-between",background:"rgba(2,8,18,.9)"}}>
         <span>서울 37.5°N · 8인치 돕소니언 안시 · v9c</span>
         <span>{Object.keys(CONST_DATA).length}개 별자리 · 28수 · 줌/핀치/체크리스트 🌙</span>
@@ -1805,4 +1828,3 @@ export default function App() {
     </div>
   );
 }
-
