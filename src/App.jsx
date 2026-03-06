@@ -1344,7 +1344,7 @@ export default function App() {
 
 
   return (
-    <div style={{background:sc.nebula,minHeight:"100vh",color:"#d0e8f8",fontFamily:"'Noto Sans KR','Apple SD Gothic Neo',sans-serif",fontSize:"14px",transition:"background 0.8s"}}>
+    <div style={{background:sc.nebula,minHeight:"100vh",color:"#d0e8f8",fontFamily:"'Noto Sans KR','Apple SD Gothic Neo',sans-serif",fontSize:isMobile?"15px":"14px",transition:"background 0.8s",paddingTop:"env(safe-area-inset-top)"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Exo+2:wght@300;700;800&display=swap');
         ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:#010810} ::-webkit-scrollbar-thumb{background:#1a3050;border-radius:3px}
@@ -1353,27 +1353,27 @@ export default function App() {
       `}</style>
 
       {/* HEADER */}
-      <div style={{padding:"10px 18px",borderBottom:"1px solid #0d2040",background:"rgba(2,12,28,.92)",backdropFilter:"blur(10px)"}}>
+      <div style={{padding:isMobile?"14px 16px":"10px 18px",borderBottom:"1px solid #0d2040",background:"rgba(2,12,28,.92)",backdropFilter:"blur(10px)"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"10px",marginBottom:"8px"}}>
           <div>
             <div style={{fontSize:"16px",fontWeight:"800",color:"#c8e8ff",letterSpacing:"1px",fontFamily:"'Exo 2',sans-serif"}}>🔭 별자리 학습 가이드</div>
             <div style={{fontSize:"10px",color:"#3a6a8a",marginTop:"1px"}}>서울 37.5°N · 8인치 돕소니언 안시</div>
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:"6px",flexWrap:"wrap",justifyContent:"flex-end"}}>
+          <div style={{display:"flex",alignItems:"center",gap:isMobile?"8px":"6px",flexWrap:"wrap",justifyContent:"flex-end"}}>
             {todayMode && (
               <select value={currentMonth} onChange={e=>setCurrentMonth(Number(e.target.value))}
-                style={{padding:"4px 7px",borderRadius:"8px",border:"1px solid #1a4060",background:"#041020",color:"#7EE8C8",fontSize:"11px",cursor:"pointer",fontFamily:"inherit"}}>
+                style={{padding:isMobile?"8px 10px":"4px 7px",borderRadius:"8px",border:"1px solid #1a4060",background:"#041020",color:"#7EE8C8",fontSize:isMobile?"13px":"11px",cursor:"pointer",fontFamily:"inherit"}}>
                 {["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"].map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
               </select>
             )}
             {/* Urban filter */}
             <button onClick={()=>setUrbanFilter(v=>!v)}
-              style={S.pillBtn(urbanFilter, "#FFD166")}>
+              style={{...S.pillBtn(urbanFilter, "#FFD166"), padding:isMobile?"8px 14px":"4px 10px", fontSize:isMobile?"13px":"11px"}}>
               🏙️ {urbanFilter ? "도심만 ON" : "도심 필터"}
             </button>
             {/* Today mode */}
             <button onClick={()=>setTodayMode(v=>!v)}
-              style={{padding:"4px 10px",borderRadius:"16px",border:"none",cursor:"pointer",fontSize:"11px",fontFamily:"inherit",fontWeight:"700",
+              style={{padding:isMobile?"8px 14px":"4px 10px",borderRadius:"16px",border:"none",cursor:"pointer",fontSize:isMobile?"13px":"11px",fontFamily:"inherit",fontWeight:"700",
                 background:todayMode?"linear-gradient(135deg,#FFD166,#F4845F)":"#0d2040",
                 color:todayMode?"#030B1A":"#4a8aa8",
                 boxShadow:todayMode?"0 0 10px rgba(255,200,80,0.35)":"none"}}>
@@ -1383,20 +1383,20 @@ export default function App() {
           </div>
         </div>
         {/* Time slider */}
-        <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"4px 0"}}>
-          <span style={{fontSize:"10px",color:"#2a5070",flexShrink:0}}>🕙 관측 시간</span>
+        <div style={{display:"flex",alignItems:"center",gap:"10px",padding:isMobile?"8px 0":"4px 0"}}>
+          <span style={{fontSize:isMobile?"12px":"10px",color:"#2a5070",flexShrink:0}}>🕙 관측 시간</span>
           <input type="range" min={19} max={25} step={0.5} value={obsHour}
             onChange={e=>setObsHour(Number(e.target.value))}
-            style={{flex:1,accentColor:sc.color,cursor:"pointer",height:"3px"}}/>
+            style={{flex:1,accentColor:sc.color,cursor:"pointer",height:isMobile?"6px":"3px"}}/>
           <span style={{fontSize:"12px",fontWeight:"700",color:sc.color,minWidth:"40px",textAlign:"right"}}>
             {(()=>{const h=obsHour>=24?obsHour-24:obsHour;const hh=Math.floor(h);const mm=h%1?'30':'00';return `${String(hh).padStart(2,'0')}:${mm}`;})()}
           </span>
         </div>
         {/* 나침반 + WakeLock 컨트롤 */}
-        <div style={{display:"flex",gap:6,padding:"4px 0",alignItems:"center",flexWrap:"wrap"}}>
+        <div style={{display:"flex",gap:isMobile?10:6,padding:isMobile?"8px 0":"4px 0",alignItems:"center",flexWrap:"wrap"}}>
           {/* 나침반 버튼 */}
           {compassPerm === "granted" ? (
-            <div style={{display:"flex",alignItems:"center",gap:5,padding:"3px 10px",borderRadius:14,
+            <div style={{display:"flex",alignItems:"center",gap:5,padding:isMobile?"6px 12px":"3px 10px",borderRadius:14,
               background:"rgba(255,209,102,0.15)",border:"1px solid rgba(255,209,102,0.4)"}}>
               <span style={{fontSize:"11px",color:"#FFD166",fontWeight:"700"}}>
                 🧭 {heading !== null ? `${heading}° ${["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"][Math.round(heading/22.5)%16]}` : "측정 중…"}
@@ -1408,17 +1408,17 @@ export default function App() {
             <span style={{fontSize:"10px",color:"#3a6a8a"}}>🧭 나침반 미지원 기기</span>
           ) : (
             <button onClick={startListening}
-              style={{padding:"3px 10px",borderRadius:14,border:"1px solid #2a5070",background:"#0d2040",
-                color:"#4a8aa8",fontSize:"11px",cursor:"pointer",fontFamily:"inherit",fontWeight:"600"}}>
+              style={{padding:isMobile?"8px 14px":"3px 10px",borderRadius:14,border:"1px solid #2a5070",background:"#0d2040",
+                color:"#4a8aa8",fontSize:isMobile?"13px":"11px",cursor:"pointer",fontFamily:"inherit",fontWeight:"600"}}>
               🧭 나침반 켜기
             </button>
           )}
           {/* WakeLock 버튼 */}
           {wakeLockSupported && (
             <button onClick={wakeLockActive ? releaseWakeLock : requestWakeLock}
-              style={{padding:"3px 10px",borderRadius:14,border:`1px solid ${wakeLockActive?"#7EE8C8":"#2a5070"}`,
+              style={{padding:isMobile?"8px 14px":"3px 10px",borderRadius:14,border:`1px solid ${wakeLockActive?"#7EE8C8":"#2a5070"}`,
                 background:wakeLockActive?"rgba(126,232,200,0.15)":"#0d2040",
-                color:wakeLockActive?"#7EE8C8":"#4a8aa8",fontSize:"11px",cursor:"pointer",fontFamily:"inherit",fontWeight:"600"}}>
+                color:wakeLockActive?"#7EE8C8":"#4a8aa8",fontSize:isMobile?"13px":"11px",cursor:"pointer",fontFamily:"inherit",fontWeight:"600"}}>
               {wakeLockActive ? "💡 화면 켜짐 유지 ON" : "💡 화면 꺼짐 방지"}
             </button>
           )}
@@ -1430,7 +1430,7 @@ export default function App() {
       <div style={{display:"flex",borderBottom:"1px solid #0d2040",background:"rgba(2,8,18,.9)"}}>
         {SEASONS_CFG.map(s=>(
           <button key={s.id} className="tb" onClick={()=>changeSeason(s.id)}
-            style={{flex:1,padding:"10px 4px",border:"none",background:"none",cursor:"pointer",fontSize:"12px",fontWeight:s.id===season?"800":"400",color:s.id===season?s.color:"#2a5070",borderBottom:s.id===season?`2px solid ${s.color}`:"2px solid transparent",fontFamily:"inherit"}}>
+            style={{flex:1,padding:isMobile?"14px 4px":"10px 4px",border:"none",background:"none",cursor:"pointer",fontSize:isMobile?"13px":"12px",fontWeight:s.id===season?"800":"400",color:s.id===season?s.color:"#2a5070",borderBottom:s.id===season?`2px solid ${s.color}`:"2px solid transparent",fontFamily:"inherit"}}>
             <div style={{fontSize:"16px"}}>{s.emoji}</div><div>{s.label}</div><div style={{fontSize:"10px",opacity:.6}}>{s.months}</div>
           </button>
         ))}
@@ -1462,14 +1462,14 @@ export default function App() {
               <span style={{fontSize:"10px",color:"#2a5070"}}>
                 {todayMode?`🌙 ${["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"][currentMonth-1]} 밤하늘`:`📐 ${sc.months}`}
               </span>
-              <div style={{display:"flex",gap:4}}>
-                <button onClick={()=>setShowAst(v=>!v)} style={{padding:"2px 7px",borderRadius:10,border:"none",cursor:"pointer",fontSize:"10px",fontFamily:"inherit",background:showAst?sc.color:"#0d2040",color:showAst?"#030B1A":"#4a8aa8",fontWeight:showAst?"700":"400"}}>
+              <div style={{display:"flex",gap:isMobile?8:4}}>
+                <button onClick={()=>setShowAst(v=>!v)} style={{padding:isMobile?"6px 12px":"2px 7px",borderRadius:10,border:"none",cursor:"pointer",fontSize:isMobile?"12px":"10px",fontFamily:"inherit",background:showAst?sc.color:"#0d2040",color:showAst?"#030B1A":"#4a8aa8",fontWeight:showAst?"700":"400"}}>
                   {showAst?"✦ON":"✦아스테리즘"}
                 </button>
-                <button onClick={()=>setShow28su(v=>!v)} style={{padding:"2px 7px",borderRadius:10,border:"none",cursor:"pointer",fontSize:"10px",fontFamily:"inherit",background:show28su?"#F4845F":"#0d2040",color:show28su?"#030B1A":"#4a8aa8",fontWeight:show28su?"700":"400"}}>
+                <button onClick={()=>setShow28su(v=>!v)} style={{padding:isMobile?"6px 12px":"2px 7px",borderRadius:10,border:"none",cursor:"pointer",fontSize:isMobile?"12px":"10px",fontFamily:"inherit",background:show28su?"#F4845F":"#0d2040",color:show28su?"#030B1A":"#4a8aa8",fontWeight:show28su?"700":"400"}}>
                   {show28su?"🏮ON":"🏮28수"}
                 </button>
-                <button onClick={()=>setFullscreen(true)} style={{padding:"2px 7px",borderRadius:10,border:"none",cursor:"pointer",fontSize:"10px",fontFamily:"inherit",background:"#0d2040",color:"#4a8aa8"}}>
+                <button onClick={()=>setFullscreen(true)} style={{padding:isMobile?"6px 12px":"2px 7px",borderRadius:10,border:"none",cursor:"pointer",fontSize:isMobile?"12px":"10px",fontFamily:"inherit",background:"#0d2040",color:"#4a8aa8"}}>
                   ⛶ 크게
                 </button>
               </div>
@@ -1502,8 +1502,8 @@ export default function App() {
             <div style={{padding:"2px 2px 6px",position:"relative"}}>
               <input type="text" value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}
                 placeholder="🔍 별자리 검색 (이름·라틴명·별)"
-                style={{width:"100%",padding:"6px 10px",paddingRight:searchQuery?"28px":"10px",borderRadius:8,
-                  border:"1px solid #1a3050",background:"#040f1e",color:"#90b8d0",fontSize:"11px",
+                style={{width:"100%",padding:isMobile?"10px 14px":"6px 10px",paddingRight:searchQuery?"28px":"10px",borderRadius:8,
+                  border:"1px solid #1a3050",background:"#040f1e",color:"#90b8d0",fontSize:isMobile?"14px":"11px",
                   fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
               {searchQuery && (
                 <button onClick={()=>setSearchQuery("")}
@@ -1533,21 +1533,21 @@ export default function App() {
               const isChecked=!!checklist[id];
               return (
               <div key={id} className="cc" onClick={()=>selectConst(id)}
-                style={{padding:"7px 9px",marginBottom:"3px",borderRadius:"8px",cursor:"pointer",
+                style={{padding:isMobile?"11px 12px":"7px 9px",marginBottom:isMobile?"5px":"3px",borderRadius:"8px",cursor:"pointer",
                   background:isSel?`${dotColor}18`:"rgba(255,255,255,.02)",
                   border:`1px solid ${isSel?dotColor+"44":"#0d2040"}`,opacity:isChecked?0.5:1}}>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <div onClick={e=>{e.stopPropagation();toggleCheck(id);}}
-                    style={{flexShrink:0,width:15,height:15,borderRadius:3,border:`1.5px solid ${dotColor}66`,
+                    style={{flexShrink:0,width:isMobile?22:15,height:isMobile?22:15,borderRadius:isMobile?4:3,border:`1.5px solid ${dotColor}66`,
                       background:isChecked?dotColor:"transparent",display:"flex",alignItems:"center",
                       justifyContent:"center",cursor:"pointer",fontSize:"9px",color:"#030B1A",fontWeight:"900"}}>
                     {isChecked&&"✓"}
                   </div>
                   <span style={{fontSize:"15px"}}>{cn.symbol||"★"}</span>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:isSel?"700":"400",color:isSel?dotColor:"#90b8d0",fontSize:"12px",
+                    <div style={{fontWeight:isSel?"700":"400",color:isSel?dotColor:"#90b8d0",fontSize:isMobile?"14px":"12px",
                       textDecoration:isChecked?"line-through":"none"}}>{cn.name||id}</div>
-                    <div style={{fontSize:"9px",color:"#2a5070"}}>{cn.latin||""}</div>
+                    <div style={{fontSize:isMobile?"11px":"9px",color:"#2a5070"}}>{cn.latin||""}</div>
                   </div>
                   <span style={{fontSize:"9px",color:URBAN_COLORS[uvis],flexShrink:0,
                     background:`${URBAN_COLORS[uvis]}18`,padding:"1px 4px",borderRadius:8}}>
@@ -1589,7 +1589,7 @@ export default function App() {
             <div className={isMobile?"mobile-scroll":""} style={{display:"flex",gap:"4px",marginTop:"10px",flexWrap:isMobile?"nowrap":"wrap",overflowX:isMobile?"auto":"visible",paddingBottom:isMobile?"4px":"0",WebkitOverflowScrolling:"touch"}}>
               {[["info","📍 관측"],["myth","📖 신화"],["talk","💬 스몰토크"],["specs","⭐ 별 스펙"],["dso","🔭 딥스카이"],["kor","🏮 동양"],["planet","🪐 행성"],["cond","🌙 관측조건"],["challenge","🎯 챌린지"],["guide","🌟 초보가이드"],["ast","✦ 아스테리즘"]].map(([t,lbl])=>(
                 <button key={t} className="tb" onClick={()=>setTab(t)}
-                  style={{...S.tabBtn(t===tab, sc.color),flexShrink:0,whiteSpace:"nowrap"}}>{lbl}</button>
+                  style={{...S.tabBtn(t===tab, sc.color),flexShrink:0,whiteSpace:"nowrap",padding:isMobile?"8px 14px":"3px 9px",fontSize:isMobile?"12px":"10.5px"}}>{lbl}</button>
               ))}
             </div>
           </div>
@@ -1807,11 +1807,11 @@ export default function App() {
 
       {/* MOBILE BOTTOM TAB BAR */}
       {isMobile && (
-        <div style={{display:"flex",borderTop:"1px solid #0d2040",background:"rgba(2,8,18,.95)",backdropFilter:"blur(10px)",position:"sticky",bottom:0,zIndex:100}}>
+        <div style={{display:"flex",borderTop:"1px solid #0d2040",background:"rgba(2,8,18,.95)",backdropFilter:"blur(10px)",position:"sticky",bottom:0,zIndex:100,paddingBottom:"env(safe-area-inset-bottom)"}}>
           {[["map","🗺️ 지도"],["detail","📋 상세"]].map(([t,lbl])=>(
             <button key={t} onClick={()=>setMobileTab(t)}
-              style={{flex:1,padding:"10px 4px",border:"none",background:"none",cursor:"pointer",
-                fontSize:"12px",fontWeight:mobileTab===t?"700":"400",
+              style={{flex:1,padding:"14px 4px",border:"none",background:"none",cursor:"pointer",
+                fontSize:"14px",fontWeight:mobileTab===t?"700":"400",
                 color:mobileTab===t?sc.color:"#2a5070",
                 borderTop:mobileTab===t?`2px solid ${sc.color}`:"2px solid transparent",
                 fontFamily:"inherit"}}>
@@ -1821,7 +1821,7 @@ export default function App() {
         </div>
       )}
 
-      <div style={{padding:"7px 18px",borderTop:"1px solid #0d2040",fontSize:"10px",color:"#1a3050",display:"flex",justifyContent:"space-between",background:"rgba(2,8,18,.9)"}}>
+      <div style={{padding:"7px 18px",borderTop:"1px solid #0d2040",fontSize:"10px",color:"#1a3050",display:isMobile?"none":"flex",justifyContent:"space-between",background:"rgba(2,8,18,.9)"}}>
         <span>서울 37.5°N · 8인치 돕소니언 안시 · v9c</span>
         <span>{Object.keys(CONST_DATA).length}개 별자리 · 28수 · 줌/핀치/체크리스트 🌙</span>
       </div>
