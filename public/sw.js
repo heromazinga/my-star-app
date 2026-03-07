@@ -1,4 +1,4 @@
-const CACHE_NAME = 'constellation-2026030700905';
+const CACHE_NAME = 'constellation-2026030700936';
 
 // 오프라인에서도 작동할 파일들
 const PRECACHE_URLS = [
