@@ -243,13 +243,45 @@ const MONTHLY_VISIBLE = {
   12: ["orion","taurus","gemini","auriga","canisMajor","cassiopeia","perseus","andromeda","aries"],
 };
 
-// 행성 현재 위치 (2026년 3월 서울 22:00 기준 근사값)
-const PLANETS_NOW = [
-  {name:"금성 ♀", nameEng:"Venus",   az:260, alt:12, color:"#FFFDE0", size:6, desc:"새벽 동쪽 지평선. '샛별' — 일출 1~2시간 전 가장 밝음. 밤 관측 시간대엔 안 보입니다."},
-  {name:"목성 ♃", nameEng:"Jupiter", az:232, alt:38, color:"#FFD580", size:5, desc:"쌍둥이자리 안! 폴룩스 근처에서 가장 밝게 빛남. 도심에서도 맨눈으로 선명."},
-  {name:"화성 ♂", nameEng:"Mars",    az:195, alt:52, color:"#FF6B4A", size:4, desc:"게자리 근처. 붉은빛으로 구별 가능. 현재 역행 중."},
-  {name:"토성 ♄", nameEng:"Saturn",  az:270, alt:8,  color:"#F0E68C", size:4, desc:"새벽 동쪽 극저고도. 금성보다 먼저 뜸. 3월엔 관측 어려움 — 5월부터 본격 가능."},
+/* ⚠️ 매년 12월 업데이트 필요!
+   새 채팅에서 아래 프롬프트 사용:
+
+   "별자리 웹앱에 들어갈 행성 위치 데이터를 만들어줘.
+   {현재연도+1}년 서울(37.5°N) 기준, 22시 관측 기준으로
+   금성/목성/화성/토성의 월별(1~12월) 방위각(az)과 고도(alt)를
+   지금 코드의 PLANETS_MONTHLY 형식에 맞춰서 줘.
+   desc에는 해당 월의 관측 팁도 한 줄씩 넣어줘."
+
+   → 받은 데이터로 아래 PLANETS_MONTHLY 교체
+   → PLANETS_DATA_YEAR 숫자 수정
+   → sw.js CACHE_NAME 숫자 올리기
+*/
+const PLANETS_DATA_YEAR = 2026;
+const PLANETS_META = [
+  {name:"금성 ♀",nameEng:"Venus",color:"#FFFDE0",size:6},
+  {name:"목성 ♃",nameEng:"Jupiter",color:"#FFD580",size:5},
+  {name:"화성 ♂",nameEng:"Mars",color:"#FF6B4A",size:4},
+  {name:"토성 ♄",nameEng:"Saturn",color:"#F0E68C",size:4},
 ];
+// 월별 행성 위치: [금성{az,alt,desc}, 목성, 화성, 토성]
+const PLANETS_MONTHLY = {
+  1:[{az:240,alt:25,desc:"저녁 서쪽. 해진 후 가장 밝게 빛남"},{az:65,alt:55,desc:"황소자리 근처. 밤새 관측 가능"},{az:72,alt:60,desc:"쌍둥이자리. 밝고 선명"},{az:260,alt:5,desc:"새벽 동쪽 극저고도. 관측 어려움"}],
+  2:[{az:250,alt:20,desc:"저녁 서쪽. 고도 낮아지는 중"},{az:100,alt:50,desc:"쌍둥이자리 방향. 여전히 밝음"},{az:130,alt:65,desc:"게자리 부근. 높이 떠서 좋은 관측"},{az:265,alt:3,desc:"새벽 극저고도. 거의 안 보임"}],
+  3:[{az:260,alt:12,desc:"새벽 동쪽 전환 중. 밤엔 안 보임"},{az:232,alt:38,desc:"쌍둥이자리. 저녁 남서쪽"},{az:195,alt:52,desc:"게자리 근처. 붉은빛"},{az:270,alt:8,desc:"새벽 동쪽. 5월부터 본격 가능"}],
+  4:[{az:85,alt:10,desc:"새벽 동쪽 저고도. 일출 직전 잠깐"},{az:245,alt:28,desc:"쌍둥이자리 서쪽으로 이동 중"},{az:210,alt:45,desc:"사자자리 방향. 저녁 관측"},{az:260,alt:15,desc:"새벽 동쪽. 서서히 올라오는 중"}],
+  5:[{az:75,alt:18,desc:"새벽 동쪽. 밝지만 시간 짧음"},{az:255,alt:18,desc:"쌍둥이자리. 서쪽 저고도"},{az:225,alt:38,desc:"사자~처녀자리 사이"},{az:250,alt:22,desc:"새벽 남동. 고리 관측 시작"}],
+  6:[{az:70,alt:22,desc:"새벽 동쪽. 금성 최대이각 근처"},{az:265,alt:10,desc:"서쪽 지평선 가까이. 관측 끝나감"},{az:235,alt:30,desc:"처녀자리 방향"},{az:225,alt:30,desc:"새벽 남쪽. 고리 선명해짐"}],
+  7:[{az:80,alt:15,desc:"새벽 동쪽. 고도 낮아지는 중"},{az:270,alt:5,desc:"서쪽 극저고도. 관측 불가"},{az:245,alt:22,desc:"처녀~천칭자리"},{az:210,alt:38,desc:"자정 남쪽. 고리 관측 최적기 시작"}],
+  8:[{az:260,alt:8,desc:"저녁 서쪽 전환. 내합 근처"},{az:85,alt:8,desc:"새벽 동쪽. 다시 떠오르는 중"},{az:250,alt:18,desc:"전갈자리 방향. 남쪽 저고도"},{az:195,alt:42,desc:"밤 11시 남쪽. 고리 관측 최적"}],
+  9:[{az:245,alt:15,desc:"저녁 서쪽 저고도"},{az:80,alt:18,desc:"새벽 동쪽. 서서히 밝아짐"},{az:255,alt:12,desc:"남서쪽 저고도. 관측 어려워짐"},{az:185,alt:40,desc:"자정 전 남쪽. 충 근처 최적"}],
+  10:[{az:235,alt:22,desc:"저녁 서쪽. 밝아지는 중"},{az:75,alt:28,desc:"새벽 동쪽. 점점 밝아짐"},{az:260,alt:8,desc:"서쪽 극저고도. 거의 안 보임"},{az:175,alt:35,desc:"저녁 남쪽. 여전히 잘 보임"}],
+  11:[{az:230,alt:28,desc:"저녁 서쪽. 최대이각 근처 밝음"},{az:68,alt:40,desc:"새벽 동남. 점점 높아짐"},{az:80,alt:5,desc:"새벽 극저고도. 관측 어려움"},{az:195,alt:28,desc:"저녁 남쪽. 고도 낮아지는 중"}],
+  12:[{az:225,alt:32,desc:"저녁 서쪽. 가장 밝은 시기"},{az:60,alt:52,desc:"황소자리 근처. 밤새 관측"},{az:75,alt:12,desc:"새벽 동쪽 저고도"},{az:220,alt:18,desc:"저녁 남서쪽. 이른 시간 관측"}],
+};
+function getPlanetsForMonth(month) {
+  const data = PLANETS_MONTHLY[month] || PLANETS_MONTHLY[3];
+  return PLANETS_META.map((meta,i) => ({...meta, ...data[i]}));
+}
 
 // ── 추가 학습 데이터 ── smallTalk / starSpecs / mythFull
 // 기존 CONST_DATA에 Object.assign으로 조용히 병합
@@ -489,6 +521,62 @@ const OBS_CHALLENGES = [
 ];
 
 /* ── 별자리 간 스토리 연결 ── */
+const STORY_CHAINS = [
+  {id:"hercules",title:"헤라클레스 영웅담",emoji:"⚡",
+    desc:"올림포스의 반신이 괴물들을 처치하며 별이 되기까지",
+    route:["leo","cancer","hercules","scorpius"],
+    summaries:{
+      leo:"첫 번째 과업 — 무적의 네메아 사자를 맨손으로 처치하다",
+      cancer:"두 번째 과업 중 히드라를 돕다가 밟혀 죽은 게",
+      hercules:"12과업을 완수한 영웅, 머리를 아래로 한 채 별이 되다",
+      scorpius:"오리온을 죽인 전갈 — 헤라가 보낸 또 다른 자객",
+    }},
+  {id:"perseus-family",title:"페르세우스 가족 드라마",emoji:"👑",
+    desc:"허영심 많은 여왕, 쇠사슬에 묶인 공주, 괴물을 죽인 영웅",
+    route:["cassiopeia","andromeda","perseus","pegasus"],
+    summaries:{
+      cassiopeia:"허영심으로 딸을 위험에 빠뜨린 여왕",
+      andromeda:"바다 괴물 제물로 바위에 묶인 공주",
+      perseus:"메두사를 베고 공주를 구한 영웅",
+      pegasus:"메두사의 피에서 태어난 천마",
+    }},
+  {id:"chilseok",title:"칠석 — 견우직녀 사랑 이야기",emoji:"🌌",
+    desc:"은하수를 사이에 둔 영원한 사랑, 그리고 오작교",
+    route:["lyra","aquila","cygnus"],
+    summaries:{
+      lyra:"직녀성 베가 — 베틀 앞에서 견우를 그리워하는 별",
+      aquila:"견우성 알타이르 — 은하수 건너편의 그리운 별",
+      cygnus:"오작교 데네브 — 칠석에 까치가 놓는 다리",
+    }},
+  {id:"orion-saga",title:"오리온의 비극",emoji:"⚔️",
+    desc:"위대한 사냥꾼의 자만, 그리고 영원히 만나지 못하는 숙적",
+    route:["orion","canisMajor","canisMinor","scorpius"],
+    summaries:{
+      orion:"세상 모든 짐승을 사냥하겠다 선언한 거인",
+      canisMajor:"충직한 사냥개 시리우스 — 주인보다 밝게 빛나다",
+      canisMinor:"작은 사냥개 프로키온 — 주인의 죽음을 슬퍼하다",
+      scorpius:"대지의 여신이 보낸 자객 — 오리온이 지면 전갈이 뜬다",
+    }},
+  {id:"seasons-myth",title:"사계절의 탄생",emoji:"🌸",
+    desc:"처녀자리와 함께 시작되는 봄, 그리고 계절이 생긴 이유",
+    route:["virgo","bootes","ursaMajor","coronaBorealis"],
+    summaries:{
+      virgo:"페르세포네가 돌아오면 봄, 떠나면 겨울이 시작된다",
+      bootes:"곰을 쫓는 목동, 또는 포도주를 만든 비운의 이카리오스",
+      ursaMajor:"제우스의 질투로 곰이 된 님프 칼리스토",
+      coronaBorealis:"디오니소스가 버림받은 공주에게 선물한 황금 왕관",
+    }},
+  {id:"winter-jewels",title:"겨울 밤의 보석함",emoji:"❄️",
+    desc:"겨울 대삼각형과 황소, 마부 — 가장 화려한 밤하늘",
+    route:["taurus","auriga","gemini","orion"],
+    summaries:{
+      taurus:"제우스가 에우로파를 태우고 바다를 건넌 황소",
+      auriga:"아테네의 현명한 왕, 또는 헤파이스토스가 만든 전차",
+      gemini:"하나는 불멸 하나는 필멸 — 영원히 함께한 쌍둥이",
+      orion:"겨울 밤하늘의 제왕, 세 별의 허리띠가 길잡이",
+    }},
+];
+
 const STORY_LINKS = {
   perseus: [{id:"andromeda",rel:"구출한 공주 → 결혼"},{id:"pegasus",rel:"메두사에서 탄생"},{id:"cassiopeia",rel:"장모 카시오페이아"}],
   andromeda: [{id:"perseus",rel:"구출해준 영웅"},{id:"cassiopeia",rel:"어머니"},{id:"pegasus",rel:"대사각형 공유별"}],
@@ -739,7 +827,7 @@ function StarMapSVG({ data, color }) {
 }
 
 /* ── PLANISPHERE ── */
-function Planisphere({ season, selected, onSelect, color, showAst, show28su, todayMode, currentMonth, obsHour, fullscreen, heading, compassLock }) {
+function Planisphere({ season, selected, onSelect, color, showAst, show28su, todayMode, currentMonth, obsHour, fullscreen, heading, compassLock, planets }) {
   const [zoom, setZoom] = useState(1.0);
   const [pan, setPan] = useState({x:0, y:0});
   const [dragging, setDragging] = useState(false);
@@ -881,7 +969,7 @@ function Planisphere({ season, selected, onSelect, color, showAst, show28su, tod
           })}
 
           {/* Planets */}
-          {todayMode && PLANETS_NOW.map((p,i)=>{
+          {todayMode && (planets||[]).map((p,i)=>{
             const [px,py]=toXY(p.az,p.alt);
             return (
               <g key={i} filter="url(#pgfx)">
@@ -1401,7 +1489,8 @@ export default function App() {
     ? allIds.filter(matchSearch)
     : (todayMode ? todayVisible.filter(id=>CONST_DATA[id]) : ids)
       .filter(id => !urbanFilter || URBAN_VIS[id] === "urban");
-  const activePlanet = todayMode ? PLANETS_NOW : [];
+  const planetsNow = getPlanetsForMonth(currentMonth);
+  const activePlanet = todayMode ? planetsNow : [];
 
 
   return (
@@ -1508,6 +1597,13 @@ export default function App() {
       </div>
 
       {/* SEASON TABS */}
+      {new Date().getFullYear() > PLANETS_DATA_YEAR && (
+        <div style={{padding:isMobile?"10px 14px":"6px 18px",background:"rgba(244,132,95,0.15)",borderBottom:"1px solid #F4845F44",
+          display:"flex",alignItems:"center",gap:8,fontSize:isMobile?"12px":"11px",color:"#F4845F"}}>
+          <span>⚠️</span>
+          <span>행성 데이터가 <strong>{PLANETS_DATA_YEAR}년</strong> 기준입니다. 업데이트가 필요해요!</span>
+        </div>
+      )}
       <div style={{display:"flex",borderBottom:"1px solid #0d2040",background:"rgba(2,8,18,.9)"}}>
         {SEASONS_CFG.map(s=>(
           <button key={s.id} className="tb" onClick={()=>changeSeason(s.id)}
@@ -1560,7 +1656,7 @@ export default function App() {
           <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
             <Planisphere season={season} selected={selected} onSelect={id=>{selectConst(id);setFullscreen(false);}}
               color={sc.color} showAst={showAst} show28su={show28su} todayMode={todayMode} currentMonth={currentMonth}
-              obsHour={obsHour} fullscreen={true} heading={heading} compassLock={compassLock}/>
+              obsHour={obsHour} fullscreen={true} heading={heading} compassLock={compassLock} planets={planetsNow}/>
           </div>
           {/* 하단 닫기 버튼 */}
           <div style={{padding:isMobile?"14px 14px":"10px 18px",
@@ -1601,7 +1697,7 @@ export default function App() {
             </div>
             <Planisphere season={season} selected={selected} onSelect={selectConst}
               color={sc.color} showAst={showAst} show28su={show28su} todayMode={todayMode} currentMonth={currentMonth}
-              obsHour={obsHour} fullscreen={false} heading={heading} compassLock={compassLock}/>
+              obsHour={obsHour} fullscreen={false} heading={heading} compassLock={compassLock} planets={planetsNow}/>
             {todayMode && (
               <div style={{padding:"4px 8px",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
                 {(()=>{const moon=getMoonPhase();const mp=getMoonSkyPosition(obsHour,moon.phase);return(
@@ -1609,7 +1705,7 @@ export default function App() {
                     <span>{moon.emoji}</span> {moon.name} {moon.illum}%{!mp.visible&&" (지평선 아래)"}
                   </div>
                 );})()}
-                {PLANETS_NOW.map((p,i)=>(
+                {planetsNow.map((p,i)=>(
                   <div key={i} style={{display:"flex",alignItems:"center",gap:3,fontSize:"10px",color:p.color}}>
                     <div style={{width:7,height:7,borderRadius:"50%",background:p.color,boxShadow:`0 0 4px ${p.color}`}}/>
                     {p.name}
@@ -1772,6 +1868,46 @@ export default function App() {
                     </div>
                   </div>
                 )}
+                {/* 스토리 체인 — 이 별자리가 포함된 체인 */}
+                {STORY_CHAINS.filter(ch=>ch.route.includes(selected)).length > 0 && (
+                  <div style={{...S.cardLg, border:`1px solid ${sc.color}22`, padding:"14px"}}>
+                    <div style={{fontSize:"11px",fontWeight:"700",color:sc.color,marginBottom:10}}>📖 스토리 체인</div>
+                    {STORY_CHAINS.filter(ch=>ch.route.includes(selected)).map(chain=>(
+                      <div key={chain.id} style={{marginBottom:12,padding:"12px",borderRadius:10,
+                        background:"rgba(4,15,30,.8)",border:"1px solid #0d2040"}}>
+                        <div style={{fontSize:"13px",fontWeight:"700",color:"#c8e8ff",marginBottom:4}}>
+                          {chain.emoji} {chain.title}
+                        </div>
+                        <div style={{fontSize:"11px",color:"#3a6a8a",marginBottom:10,...S.serif}}>{chain.desc}</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                          {chain.route.map((id,i)=>{
+                            const cn=CONST_DATA[id]; if(!cn) return null;
+                            const isCurrent = id===selected;
+                            const sColor = S.seasonColor(cn.season);
+                            return (
+                              <div key={id} onClick={()=>selectConst(id)}
+                                style={{display:"flex",alignItems:"center",gap:8,padding:isMobile?"10px":"7px 10px",borderRadius:8,
+                                  cursor:"pointer",background:isCurrent?`${sColor}18`:"transparent",
+                                  border:`1px solid ${isCurrent?sColor+"44":"transparent"}`}}>
+                                <div style={{width:22,height:22,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",
+                                  background:isCurrent?sColor:"#0d2040",color:isCurrent?"#030B1A":"#3a6a8a",
+                                  fontSize:"10px",fontWeight:"700",flexShrink:0}}>{i+1}</div>
+                                <span style={{fontSize:"14px"}}>{cn.symbol}</span>
+                                <div style={{flex:1,minWidth:0}}>
+                                  <div style={{fontSize:isMobile?"13px":"12px",fontWeight:isCurrent?"700":"400",color:isCurrent?sColor:"#90b8d0"}}>{cn.name}</div>
+                                  <div style={{fontSize:"10px",color:"#3a6a8a",marginTop:1}}>{chain.summaries[id]||""}</div>
+                                </div>
+                                {i < chain.route.length-1 && (
+                                  <span style={{fontSize:"10px",color:"#1a3050",flexShrink:0}}>→</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div style={{...S.card, padding:"12px 14px"}}>
                   <div style={{fontSize:"10px",color:S.col.muted,marginBottom:"4px"}}>📌 찾는 방법</div>
                   <div style={{fontSize:"12px",color:"#80aac0",lineHeight:1.7}}>{c.howToFind||"-"}</div>
@@ -1911,9 +2047,9 @@ export default function App() {
             {tab==="planet" && (
               <div style={S.flexCol(12)}>
                 <div style={S.infoHint}>
-                  🪐 <strong style={{color:S.col.link}}>2026년 3월 기준</strong> 서울 밤하늘 행성. 🌙 오늘밤 모드 ON 시 방위도에 표시.
+                  🪐 <strong style={{color:S.col.link}}>{PLANETS_DATA_YEAR}년 {currentMonth}월 기준</strong> 서울 밤하늘 행성. 🌙 오늘밤 모드 ON 시 방위도에 표시.
                 </div>
-                {PLANETS_NOW.map((p,i)=>(
+                {planetsNow.map((p,i)=>(
                   <div key={i} style={{display:"flex",gap:"12px",alignItems:"flex-start",padding:"14px",borderRadius:"12px",background:"rgba(4,15,30,.8)",border:`2px solid ${p.color}44`}}>
                     <div style={{flexShrink:0,width:42,height:42,borderRadius:"50%",background:`radial-gradient(circle at 35% 35%, white, ${p.color})`,boxShadow:`0 0 14px ${p.color}88`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"18px"}}>
                       {p.name.split(" ")[1]}
